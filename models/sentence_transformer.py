@@ -5,14 +5,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import torch
-from torch import nn
 from transformers import GPTNeoModel, AutoTokenizer
 
-class SentenceTransformer_Pretrained_Backbone(nn.Module):
+class SentenceTransformer(nn.Module):
 
     def __init__(self,
-        backbone_type: str = "EleutherAI/gpt-neo-125M",
-        pooling: str = "mean"
+        backbone_type = "EleutherAI/gpt-neo-125M",
+        pooling = "mean"
     ):
         super().__init__()
         
@@ -47,4 +46,4 @@ class SentenceTransformer_Pretrained_Backbone(nn.Module):
             # Last-token pooling (since GPT-Neo has no [CLS] token)
             embeddings = last_hidden[:, -1, :]                   # (batch_size, hidden_dim)
 
-        return embeddings
+        return embeddings, last_hidden

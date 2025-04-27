@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.sentence_transformer import SentenceTransformer_Pretrained_Backbone
+from models.sentence_transformer import SentenceTransformer
 import argparse
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -8,6 +8,7 @@ from utils.visualise import plot_projection
 import os
 import warnings
 
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Suppress all warnings
 warnings.filterwarnings("ignore")
 
@@ -25,13 +26,13 @@ test_sentences = [
 
 def main(args):
 	
-	model = SentenceTransformer_Pretrained_Backbone(
+	model = SentenceTransformer(
 		backbone_type = args.backbone,
 		pooling = args.pooling_op,
-	)
+	).to(device)
 
 	with torch.no_grad():
-		sentence_embeddings = model(test_sentences)
+		sentence_embeddings , _ = model(test_sentences)
 	
 	sentence_embeddings = sentence_embeddings.cpu().numpy()
 
@@ -49,17 +50,22 @@ def main(args):
 
 	plot_projection(proj_tsne, "t-SNE of Sentence Embeddings",sentences = test_sentences,  file_dest='images/part_1_tsne_visualisation.jpg')
 
-
+	## saving the model
+	if args.save_model:
+		torch.save(model, args.model_write_loc)
 
 
 if __name__=='__main__':
 
+	os.makedirs('images', exist_ok = True)
+	os.makedirs('checkpoints', exist_ok = True)
+	
 	parser = argparse.ArgumentParser()
+
 	parser.add_argument("--backbone",type = str, default= 'EleutherAI/gpt-neo-125M')
 	parser.add_argument("--pooling_op",type=str, default= 'mean' )
-	# parser.add_argument("--age", type=int, help="Your age")
-	# parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
-	args = parser.parse_args()
+	parser.add_argument("--save_model", type = bool, default = True)
+	parser.add_argument("--model_write_loc", type=str, default= 'checkpoints/sentence_transformer.pt')
 
-	os.makedirs('images', exist_ok = True)
+	args = parser.parse_args()
 	main(args)

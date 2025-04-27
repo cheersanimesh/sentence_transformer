@@ -1,8 +1,8 @@
 from datasets import load_dataset
 
-
-ds_A = load_dataset("ag_news", split="train")    # Task A: 4 classes
-ds_B = load_dataset("glue", "sst2", split="train")  # Task B: binary sentiment
+def get_dataset(dataset_a ='ag_news', dataset_b='glue', split ='test'):
+    ds_A = load_dataset(dataset_a, split=split)    # Task A: 4 classes
+    ds_B = load_dataset(dataset_b, "sst2", split='split')  # Task B: binary sentiment
 
 
 def prep_A(ex):
@@ -31,11 +31,11 @@ loader_A = DataLoader(ds_A, batch_size=1, shuffle=True,  collate_fn=collate_A)
 loader_B = DataLoader(ds_B, batch_size=1, shuffle=True,  collate_fn=collate_B)
 
 
-for (sents_A, labels_A), (sents_B, labels_B) in zip(loader_A, loader_B):
-    logits_A, _   = model(sents_A)
-    #loss_A        = criterionA(logits_A.to(device), labels_A.to(device))
-    # Task B forward + loss
-    _, logits_B   = model(sents_B)
-    #loss_B        = criterionB(logits_B.to(device), labels_B.to(device))
+# for (sents_A, labels_A), (sents_B, labels_B) in zip(loader_A, loader_B):
+#     logits_A, _   = model(sents_A)
+#     #loss_A        = criterionA(logits_A.to(device), labels_A.to(device))
+#     # Task B forward + loss
+#     _, logits_B   = model(sents_B)
+#     #loss_B        = criterionB(logits_B.to(device), labels_B.to(device))
 
-    break
+#     break
