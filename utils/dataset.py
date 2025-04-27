@@ -1,41 +1,91 @@
-from datasets import load_dataset
+import json
+import torch
+from torch.utils.data import Dataset
 
-def get_dataset(dataset_a ='ag_news', dataset_b='glue', split ='test'):
-    ds_A = load_dataset(dataset_a, split=split)    # Task A: 4 classes
-    ds_B = load_dataset(dataset_b, "sst2", split='split')  # Task B: binary sentiment
+import json
+import torch
+from torch.utils.data import Dataset
 
+class DummyMTLDataset(Dataset):
+    def __init__(self, json_path, sent2idx, ent2idx):
+        with open(json_path, "r") as f:
+            self.data = json.load(f)
+        self.sent2idx = sent2idx
+        self.ent2idx = ent2idx
 
-def prep_A(ex):
-    return {"sentence": ex["text"], "label_A": ex["label"]}
-def prep_B(ex):
-    return {"sentence": ex["sentence"], "label_B": ex["label"]}
+    def __len__(self):
+        return len(self.data)
 
-ds_A = ds_A.map(prep_A, remove_columns=ds_A.column_names)
-ds_B = ds_B.map(prep_B, remove_columns=ds_B.column_names)
+    def __getitem__(self, idx):
+        entry = self.data[idx]
+        sentence = entry["sentence"]
+        cls_label = self.sent2idx[entry["task_A"]]
 
-def collate_A(batch):
-    sentences = [x["sentence"] for x in batch]
-    labels_A  = torch.tensor([x["label_A"] for x in batch], dtype=torch.long)
-    return sentences, labels_A
+        # build a simple list of span‐dicts so we can align inside the model
+        spans = entry["task_B"]
 
-def collate_B(batch):
-    sentences = [x["sentence"] for x in batch]
-    labels_B  = torch.tensor([x["label_B"] for x in batch], dtype=torch.long)
-    return sentences, labels_B
-
-
-from torch.utils.data import DataLoader
-
-
-loader_A = DataLoader(ds_A, batch_size=1, shuffle=True,  collate_fn=collate_A)
-loader_B = DataLoader(ds_B, batch_size=1, shuffle=True,  collate_fn=collate_B)
+        return sentence, cls_label, spans
 
 
-# for (sents_A, labels_A), (sents_B, labels_B) in zip(loader_A, loader_B):
-#     logits_A, _   = model(sents_A)
-#     #loss_A        = criterionA(logits_A.to(device), labels_A.to(device))
-#     # Task B forward + loss
-#     _, logits_B   = model(sents_B)
-#     #loss_B        = criterionB(logits_B.to(device), labels_B.to(device))
+def collate_fn(batch):
+    sentences, cls_labels, spans = zip(*batch)
+    return {
+        "sentences":     list(sentences),
+        "cls_labels":    torch.tensor(cls_labels, dtype=torch.long),
+        "spans":         list(spans),
+    }
 
-#     break
+
+# class DummyMTLDataset(Dataset):
+#     def __init__(self, json_path, tokenizer, sent2idx, ent2idx, max_length=32):
+#         with open(json_path, "r") as f:
+#             self.data = json.load(f)
+#         self.tokenizer = tokenizer
+#         self.sent2idx = sent2idx
+#         self.ent2idx = ent2idx
+#         self.max_length = max_length
+
+#     def __len__(self):
+#         return len(self.data)
+
+#     def __getitem__(self, idx):
+#         entry = self.data[idx]
+#         sentence = entry["sentence"]
+#         # sentence classification label
+#         cls_label = self.sent2idx[entry["task_A"]]
+
+#         # tokenize with offsets so we can align NER spans
+#         enc = self.tokenizer(
+#             sentence,
+#             padding="max_length",
+#             truncation=True,
+#             max_length=self.max_length,
+#             return_tensors=None,
+#             return_offsets_mapping=True,
+#         )
+#         input_ids = torch.tensor(enc["input_ids"], dtype=torch.long)
+#         attention_mask = torch.tensor(enc["attention_mask"], dtype=torch.long)
+#         offsets = enc["offset_mapping"]
+
+#         # build token-level NER labels (default to “O”)
+#         ner_labels = torch.zeros(self.max_length, dtype=torch.long)
+#         for ent in entry["task_B"]:
+#             start_char, end_char, typ = ent["start"], ent["end"], ent["type"]
+#             for i, (o_start, o_end) in enumerate(offsets):
+#                 if o_start == start_char:
+#                     ner_labels[i] = self.ent2idx[f"B-{typ}"]
+#                 elif o_start >= start_char and o_end <= end_char:
+#                     ner_labels[i] = self.ent2idx[f"I-{typ}"]
+
+#         return input_ids, attention_mask, torch.tensor(cls_label), ner_labels
+
+
+# def collate_fn(batch):
+#     input_ids, attention_mask, cls_labels, ner_labels = zip(*batch)
+#     return {
+#         'sentences': 
+#         "input_ids":      torch.stack(input_ids),
+#         "attention_mask": torch.stack(attention_mask),
+#         "cls_labels":     torch.stack(cls_labels),
+#         "ner_labels":     torch.stack(ner_labels),
+#     }

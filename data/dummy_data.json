@@ -1,0 +1,44 @@
+[
+	{
+	  "sentence": "Alice went to Paris last summer.",
+	  "task_A": "travel",
+	  "task_B": [
+		{ "text": "Alice", "type": "PERSON", "start": 0, "end": 5 },
+		{ "text": "Paris", "type": "LOC", "start": 14, "end": 19 }
+	  ]
+	},
+	{
+	  "sentence": "Google announced a new AI-driven feature.",
+	  "task_A": "technology",
+	  "task_B": [
+		{ "text": "Google", "type": "ORG", "start": 0, "end": 6 },
+		{ "text": "AI", "type": "MISC", "start": 23, "end": 25 }
+	  ]
+	},
+	{
+	  "sentence": "President Biden visited Wall Street on Monday.",
+	  "task_A": "politics",
+	  "task_B": [
+		{ "text": "President Biden", "type": "PERSON", "start": 0, "end": 16 },
+		{ "text": "Wall Street", "type": "LOC", "start": 25, "end": 36 },
+		{ "text": "Monday", "type": "DATE", "start": 40, "end": 46 }
+	  ]
+	},
+	{
+	  "sentence": "The Yellowstone National Park sees over four million visitors.",
+	  "task_A": "travel",
+	  "task_B": [
+		{ "text": "Yellowstone National Park", "type": "LOC", "start": 4, "end": 31 }
+	  ]
+	},
+	{
+	  "sentence": "Tesla’s CEO Elon Musk unveiled the Cybertruck at the event.",
+	  "task_A": "technology",
+	  "task_B": [
+		{ "text": "Tesla", "type": "ORG", "start": 0, "end": 5 },
+		{ "text": "Elon Musk", "type": "PERSON", "start": 11, "end": 20 },
+		{ "text": "Cybertruck", "type": "PRODUCT", "start": 32, "end": 42 }
+	  ]
+	}
+  ]
+  
