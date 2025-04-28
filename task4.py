@@ -37,6 +37,7 @@ def main(args):
         for param in model.encoder.parameters():
             param.requires_grad = False
 
+    # defining the optimizer for training
     if args.optimizer == 'adamW':
         optimizer  = torch.optim.AdamW(model.parameters(), lr=args.lr)
     elif args.optimizer == 'sgd':
@@ -44,12 +45,13 @@ def main(args):
     else:
         raise NotImplementedError(f"Unknown optimizer {args.optimizer}")
 
-
+    # defining the critireon for TASK A
     if args.criterion_sentence_classification == 'cross_entropy':
         criterion_sentence_classification =  nn.CrossEntropyLoss()
     else:
         raise NotImplementedError
 
+    # defining the critireon for TASK b (Named Entity Recognition)
     if args.criterion_ner == 'cross_entropy':
         criterion_ner = nn.CrossEntropyLoss()
     else:
@@ -91,11 +93,13 @@ def main(args):
                 for ent in spans:
                     start, end, typ = ent["start"], ent["end"], ent["type"]
 
+            #loss for Named Enitity Recognition
             loss_ner = criterion_ner(
                 logits_ner.view(-1, L),
                 target_ner.view(-1)
             )
 
+            # Joint loss 
             loss = loss_sentence_classification + loss_ner
             optimizer.zero_grad()
             loss.backward()
@@ -162,4 +166,5 @@ if __name__=='__main__':
     parser.add_argument('--model_save_path', type = str, default = 'checkpoints/task4_model.pt')
 
     args = parser.parse_args()
+    
     main(args)

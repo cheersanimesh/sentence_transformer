@@ -68,35 +68,46 @@ def main(args):
 
 	with torch.no_grad():
 		logits_sentence_classification, ner_logits = multi_task_transformer_model(test_sentences)
+		
+		# Convert logits → predicted class indices
 		preds_cls = torch.argmax(logits_sentence_classification, dim=-1).tolist()
 		preds_ner = torch.argmax(ner_logits, dim = -1).tolist()
-
+	
+	# Loop over each test sentence and print the predicted outputs
 	for i, sent in enumerate(test_sentences):
 		print(f"\nSentence: “{sent}”")
-			# --- Task A ---
+		
+		# --- Task A ---
 		cls_idx = preds_cls[i]
 		print("  [Task A] Predicted category:", sentence_class_labels[cls_idx])
 
+		# --- Task B: NER decoding ---
 		tokens = tokenizer.tokenize(sent)        # e.g. ["[CLS]", "Alice", "went", …, "[SEP]"]
 		ner_ids = preds_ner[i]             # list of same length
 		entities = []
 		current_ent = None
+
+		# Iterate token-by-token with their predicted NER ID
 		for tok, lid in zip(tokens, ner_ids):
 			label = ner_label_map[lid]
 			if label.startswith("B-"):
+				# Begin a new entity span
 				if current_ent:
 					entities.append(current_ent)
 				current_ent = {"type": label[2:], "tokens": [tok]}
 			elif label.startswith("I-") and current_ent:
+				# Continue the current entity span
 				current_ent["tokens"].append(tok)
 			else:
+				 # Outside any named entity
 				if current_ent:
 					entities.append(current_ent)
 					current_ent = None
+		# If the last token was part of an entity, close it out
 		if current_ent:
 			entities.append(current_ent)
 
-		# pretty‐print the spans
+		# print the extacted scan
 		print("  [Task B] Predicted entities:")
 		for ent in entities:
 			text = encoder.tokenizer.convert_tokens_to_string(ent["tokens"])

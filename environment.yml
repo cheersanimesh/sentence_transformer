@@ -1,0 +1,9 @@
+name: sentence-transformer
+channels:
+  - defaults
+dependencies:
+  - python=3.9.21
+  - pip
+  # fall back to pip for anything not available in conda
+  - pip:
+    - -r requirements.txt

@@ -1,20 +1,26 @@
-# Use the official Python 3.9.21 slim image
-FROM python:3.9.21-slim
+# Use the official Miniconda3 image
+FROM continuumio/miniconda3:latest
 
 # Don’t write .pyc files; unbuffered stdout/stderr
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Set working dir
+# Set working directory
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# Copy environment spec and pip requirements
+COPY environment.yml requirements.txt ./
 
-# Copy your application code (including task1.py, task2.py, task4.py)
+# Create the conda env and clean up
+RUN conda env create -f environment.yml \
+    && conda clean -afy
+
+# Ensure the new env is on PATH
+ENV PATH=/opt/conda/envs/sentence-transformer/bin:$PATH
+
+# Copy your application code
 COPY . .
 
 # On container start, run the three tasks in order
-CMD ["sh", "-c", "python task1.py && python task2.py && python task4.py"]
+# Use bash -lc so that the conda environment is fully initialized
+CMD ["bash", "-lc", "python task1.py && python task2.py && python task4.py"]
