@@ -1,5 +1,13 @@
 [
 	{
+		"sentence": "Fetch Rewards is awesome and is America's number one app",
+		"task_A": "technology",
+		"task_B": [
+		  { "text": "Fetch Rewards", "type": "ORG", "start": 0, "end": 13 },
+		  { "text": "America", "type": "LOC", "start": 32, "end": 39 }
+		]
+	},
+	{
 	  "sentence": "Alice went to Paris last summer.",
 	  "task_A": "travel",
 	  "task_B": [

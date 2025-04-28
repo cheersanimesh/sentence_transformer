@@ -34,23 +34,31 @@ ner_label_map = {
 }
 
 def main(args):
-	
+
+	# Initialize the shared sentence encoder
 	encoder_model = SentenceTransformer(
 		backbone_type = args.encoder_backbone_type,
 		pooling = args.encoder_backbone_pooling
 	)
 
+	# If a pre-trained encoder checkpoint is provided, load it
 	if args.encoder_model_path is not None:
 		## load model
 		encoder_model = torch.load(args.encoder_model_path)
 	
-
+	
+	# Build the multi-task model using our encoder plus two heads
 	multi_task_transformer_model = MultiTaskSentenceTransformer(
 		encoder = encoder_model,
 		pooling = args.model_pooling,
 		num_classes_sentence_classification = args.num_classes_task_sentence_classification,
 		num_ner_labels = args.num_classes_ner
 	).to(device)
+	
+	if args.model_load_path is not None:
+		snapshot = torch.load(args.model_load_path)
+		multi_task_transformer_model.load_state_dict(snapshot)
+		
 
 	## Testing the inference of the model
 
@@ -104,49 +112,18 @@ if __name__=='__main__':
 
 
 	parser = argparse.ArgumentParser()
+	parser.add_argument('--model_load_path', type=str, default =None)
+
 	parser.add_argument('--encoder_backbone_type', type = str, default = 'EleutherAI/gpt-neo-125M')
 	parser.add_argument('--encoder_backbone_pooling', type = str, default = 'EleutherAI/gpt-neo-125M')
 	parser.add_argument('--model_pooling', type = str, default='mean')
 	parser.add_argument("--encoder_model_path",type = str, default= None)
 	parser.add_argument("--pooling_op",type=str, default= 'mean' )
 	
+
 	parser.add_argument('--num_classes_task_sentence_classification', type = int, default = 4)
 	parser.add_argument('--num_classes_ner', type = int, default = 9)
 	
 	args = parser.parse_args()
 	
 	main(args)
-
-
-
-### Quick ner inference 
-'''
-
-model.eval()
-sent = "Barack Obama was born in Hawaii ."
-tok = tokenizer(sent,
-                return_tensors="pt",
-                is_split_into_words=True,
-                truncation=True,
-                padding="longest")
-with torch.no_grad():
-    _, _, ner_logits = model(tok["input_ids"].to(device),
-                             tok["attention_mask"].to(device))
-# pick highest‐scoring label per token
-pred_ids = ner_logits.argmax(-1)[0].cpu().tolist()
-# map back to words
-word_ids = tok.word_ids(batch_index=0)
-prev_idx = None
-entities = []
-for idx, wid in enumerate(word_ids):
-    if wid is None:
-        continue
-    if wid != prev_idx:
-        tag = label_list[pred_ids[idx]]
-        token = tok.tokens()[idx]
-        entities.append((token, tag))
-    prev_idx = wid
-
-print(entities)
-
-'''

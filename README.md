@@ -1,13 +1,12 @@
 # Sentence Transformer
 
-
 ## Installation 
 
 ## Guide to Codebase
 
-1. 
+The results and inferences are compiled in task1.md 
 
-## Task -1
+<!-- ## Task -1
 
 
 For the sentence Transformer the model , the overall sentence transformer looks like as following:
@@ -33,26 +32,48 @@ Visualisation using PCA            |  Visualisation using t-SNE
 
 
 
-We can observe the words having similar semantic meanings and features are closer in the plots as compared to other sentences.
+We can observe the words having similar semantic meanings and features are closer in the plots as compared to other sentences. -->
 
 
 ## Task -2
 
-For part two, we have chosen the following tasks for Multi-Task Learning Framework
+The results and discussions are compiled in task2.md
 
-1. Sentence classification for sentiment (Output Dim: **4**)
-2. Named entity Recognition at token level for the sentences (Output Dim : **9**)
+<!-- For this part and we have created a dummy dataset consisting of 5 sentences locatated in 'data/dummy_data.json'
+
+Also for this part, we have chosen the following tasks for Multi-Task Learning Framework
+
+1. Sentence classification for sentiment (Output Dim: **4**) , it could belong to one of the four labels : [["travel", "technology", "politics", "other"] 
+2. Named entity Recognition at token level for the sentences (Output Dim : **9**) i.e each token could fall into : 0: "O",
+    1: "B-PERSON",
+    2: "I-PERSON",
+    3: "B-LOC",
+    4: "I-LOC",
+    5: "B-ORG",
+    6: "I-ORG",
+    7: "B-DATE",
+    8: "I-DATE",
+
+Both the task share the same enocder however have different set of projection heads. This design was adopted to keep the model and to rely on the GPTNeoModel due to reasons mentioned in the part 1.
 
 The overall model looks in the following way :
 
 \image
+
+We passed the sentences to the model to get the following output :
+
+
+Since our projection head is untrained and randomly initialized, the model's output is not what we would expect. However we can see that the model, has correct output format and on further finetuning the model, one could expect it to perform better on the two tasks. -->
+
+
 
 
 
 
 ## Task -3 Training Considerations
 
-### 3.1 Freezing the Entire Network
+The results and discussions are compiled in task3.md
+<!-- ### 3.1 Freezing the Entire Network
 - **Definition**  
   No parameters—neither backbone nor task heads—are updated during training.
 - **Use case**  
@@ -117,9 +138,11 @@ The overall model looks in the following way :
 - **Freeze everything** when you need raw embeddings or a baseline evaluation.  
 - **Freeze only the backbone** for a fast linear-probe setup.  
 - **Freeze one head** to safeguard an existing task while adapting to another.  
-- **Transfer learning:** follow a staged unfreezing protocol with cautious learning rates and early stopping to balance adaptation vs. forgetting.
+- **Transfer learning:** follow a staged unfreezing protocol with cautious learning rates and early stopping to balance adaptation vs. forgetting. -->
 
 
 ## Task - 4
+
+For Task -4 our goal is to train the Multi-Task-Sentence-Transformer network for multi task. Here we are performing rating jointly training the projection heads with a low learning rate. We choose to do the following: <add reason>
 
 

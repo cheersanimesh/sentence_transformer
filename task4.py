@@ -32,6 +32,11 @@ def main(args):
         model = torch.load(args.model_load_path)
     
 
+    # Freezing the encocder weights
+    if args.freeze_encoder:
+        for param in model.encoder.parameters():
+            param.requires_grad = False
+
     if args.optimizer == 'adamW':
         optimizer  = torch.optim.AdamW(model.parameters(), lr=args.lr)
     elif args.optimizer == 'sgd':
@@ -62,9 +67,6 @@ def main(args):
     ## train loop
 
     num_epochs = args.epochs
-
-    # 4) dataset + loader
-    # os.makedirs(os.path.dirname(args.model_save_path), exist_ok=True)
 
     # 5) training loop
     model.train()
@@ -122,6 +124,7 @@ if __name__=='__main__':
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--freeze_encoder', type = bool, default = False)
     parser.add_argument('--data_path', type=str, default='data/dummy_data.json')
     parser.add_argument('--model_load_path', type = str, default=None)
     parser.add_argument('--encoder_type', type = str, default = 'EleutherAI/gpt-neo-125M')
