@@ -14,7 +14,6 @@ warnings.filterwarnings("ignore")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Assuming single gpu infra
 
-
 test_sentences = [
     "The quick brown fox jumps over the lazy dog.",
     "I love machine learning!",
