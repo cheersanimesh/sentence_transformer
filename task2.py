@@ -1,16 +1,6 @@
-###############################################################################
-#  Multi‑Task Sentence + NER Inference Script
-#  ------------------------------------------
-#  • Loads a shared SentenceTransformer encoder (optionally from checkpoint)
-#  • Wraps it in a MultiTaskSentenceTransformer with two heads:
-#        – sentence‑level classification
-#        – token‑level NER
-#  • Runs the model on a toy JSON dataset (data/dummy_data.json)
-#  • Prints the predicted sentence category + token‑level entities
-###############################################################################
 
 import torch
-import torch.nn as nn                    # (Imported but not used; safe to remove)
+import torch.nn as nn                    
 from models.sentence_transformer import SentenceTransformer
 from models.multi_task_transformer import MultiTaskSentenceTransformer
 
@@ -19,19 +9,14 @@ import os
 import warnings
 import json
 
-#------------------------------------------------------------------------------#
-#  House‑keeping: environment variables & warning suppression
-#------------------------------------------------------------------------------#
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Avoid overly verbose tokenizer logs
 warnings.filterwarnings("ignore")               # Silence all warnings
 
-#------------------------------------------------------------------------------#
-#  Device selection – use GPU if available, else fallback to CPU
-#------------------------------------------------------------------------------#
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #------------------------------------------------------------------------------#
-#  Dummy test data – a list of sentences read from JSON
+#  Load Dummy Data
 #------------------------------------------------------------------------------#
 with open("data/dummy_data.json", "r") as f:
     data = json.load(f)
@@ -94,9 +79,7 @@ def main(args):
         preds_cls = torch.argmax(cls_logits, dim=-1).tolist()
         preds_ner = torch.argmax(ner_logits, dim=-1).tolist()
 
-    #---------------------------#
-    # 4) Pretty‑print the output#
-    #---------------------------#
+    
     for sid, sentence in enumerate(test_sentences):
         print(f"\nSentence {sid}: «{sentence}»")
         print("-" * 60)
