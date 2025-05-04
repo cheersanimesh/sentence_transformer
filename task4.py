@@ -59,10 +59,12 @@ def main(args):
     ## prepare dataset
 
     sent2idx = {lab: i for i, lab in enumerate(args.sentence_class_labels)}
+    idx2sent = {i:lab for i, lab in enumerate(args.sentence_class_labels)}
     ent2idx = {lab: i for i, lab in enumerate(args.ner_label_map)}
     idx2ent = {i:lab for i, lab in enumerate(args.ner_label_map)}
     tokenizer = model.encoder.tokenizer
 
+    #dataset = DummyMTLDataset(args.data_path, sent2idx, ent2idx)
     dataset = DummyMTLDataset(json_path = args.data_path , tokenizer = tokenizer, sent2idx = sent2idx, ent2idx = ent2idx)
     loader  = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
 
@@ -105,47 +107,63 @@ def main(args):
 
         print(f"Epoch {epoch}/{args.epochs} — avg loss {total_loss/len(loader):.4f}")
 
-    ## inference
-    
+# -------------------------------------------------------------------------
+    # 8. Quick demo inference on two example sentences
+    # -------------------------------------------------------------------------
     test_sentences = [
-        "Fetch Rewards is awesome and is America number one app",
-        'Hello Fetch Rewards'
+        "Fetch Rewards is awesome and is America's number one app",
+        "Hello Fetch Rewards"
     ]
 
-    for sent_idx, sentence in enumerate(test_sentences):
+    for sid, sentence in enumerate(test_sentences):
+        # 1) Tokenize with offsets + word_id mapping
+        enc        = tokenizer(sentence, return_offsets_mapping=True)
+        toks       = tokenizer.convert_ids_to_tokens(enc["input_ids"])
+        offsets    = enc["offset_mapping"]              # [(start, end), …]
+        word_ids   = enc.word_ids()                     # len == len(toks)
 
-        encoding = tokenizer(sentence, return_offsets_mapping=True)
-        input_ids = encoding["input_ids"]
-        toks = tokenizer.convert_ids_to_tokens(input_ids)
-        logits_cls, logits_ner = model(sentence)
+        # 2) Run model
+        with torch.no_grad():
+            logits_cls, logits_ner = model(sentence)
 
-        word_ids = encoding.word_ids()
+        preds_cls = logits_cls.argmax(dim = -1).tolist()[0]
+        pred_ids = logits_ner.argmax(dim=-1)[0]         # [seq_len]
 
-        preds_cls , preds_ner= logits_cls.argmax(dim=-1), logits_ner.argmax(dim=-1)[0]
+        # 3) Group consecutive sub‑tokens that share the same word_id
+        print(f"\nSentence {sid}: «{sentence}»")
+        print("-" * 60)
+
+        #import ipdb ; ipdb.set_trace()
         
-        word_tokens = defaultdict(list)
-        for idx, tok in enumerate(toks):
-            wid = word_ids[idx]
-            if wid is None:
+        # -------- Task A: sentence‑level class --------
+        cls_idx = preds_cls
+        print("[Task A] Predicted category:", idx2sent[cls_idx])
+
+        # -------- Task B: token‑level NER -------------
+        print("\n[Task B] Named Entity Recognition (NER)\n")
+
+        seen_words = set()
+        for tok_idx, wid in enumerate(word_ids):
+            if wid is None or wid in seen_words:        # skip special tokens / duplicates
                 continue
-            word_tokens[wid].append(tok)
+            seen_words.add(wid)
 
-        
-        words_map = {
-            wid: tokenizer.convert_tokens_to_string(tok_list)
-            for wid, tok_list in word_tokens.items()
-        }
+            # collect every sub‑token index that belongs to this word
+            piece_idxs = [i for i, w in enumerate(word_ids) if w == wid]
 
-        print(f"Sentence id : {sent_idx} <<-->> {sentence} \n")
-        
-        for idx, pred in enumerate(preds_ner[1: len(toks)+1]):
-            token_idx = idx + 1           # because we skipped [CLS] at position 0
-            wid       = word_ids[token_idx]
-            if wid is None:
-                continue
-            ent_label = idx2ent[pred.item()]
-            word      = words_map[wid]
-            print(f"{word} --> {ent_label}")
+            # merge offsets across all pieces
+            start = offsets[piece_idxs[0]][0]+1 
+            end   = offsets[piece_idxs[-1]][1]
+
+            # rebuild the canonical word string
+            word = tokenizer.convert_tokens_to_string([toks[i] for i in piece_idxs])
+
+            # choose the NER tag – BIO schemes usually tag the first piece
+            ent_label = idx2ent[pred_ids[piece_idxs[0]].item()]
+
+            # pretty‑print
+            print(f"{word:<20s} [{start:>2d}:{end:<2d}]  →  {ent_label}")
+
         
     
 
