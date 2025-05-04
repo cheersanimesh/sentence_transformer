@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn                    
 from models.sentence_transformer import SentenceTransformer
@@ -138,7 +137,7 @@ if __name__ == '__main__':
 
     # --- Encoder backbone + pooling strategy ---
     parser.add_argument('--encoder_backbone_type',    type=str,
-                        default='EleutherAI/gpt-neo-125M')
+                        default='FacebookAI/roberta-base')
     parser.add_argument('--encoder_backbone_pooling', type=str, default='mean')
     parser.add_argument('--model_pooling',            type=str, default='mean',
                         help='Pooling used in the multi‑task heads')

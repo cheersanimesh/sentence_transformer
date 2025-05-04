@@ -1,8 +1,8 @@
 # Sentence Transformer
 
-A modular pipeline for building and evaluating transformer-based sentence encoders and multi-task NLP models. Starting from a pretrained GPT-Neo backbone, this project demonstrates the followings:
+A modular pipeline for building and evaluating transformer-based sentence encoders and multi-task NLP models. Starting from a pretrained RoBERT/GPT-Neo backbone, this project demonstrates the followings:
 
-- Generate fixed-length sentence embeddings from a pretrained GPT-Neo backbone  
+- Generate fixed-length sentence embeddings from a pretrained RoBERT/GPT-Neo backbone  
 - Extend the encoder with separate heads for sentence classification and named entity recognition  
 - Analyze how different freezing and fine-tuning strategies affect model performance  
 - Run a unified multi-task training loop for joint optimization of both tasks  
@@ -56,8 +56,8 @@ Our sentence encoder consists of three main components:
      - Handles rare or out-of-vocabulary words by decomposing them into known subwords.  
      - Keeps vocabulary size manageable while minimizing “unknown” tokens.
 
-2. **Pretrained GPT-Neo/Bert Backbone**  
-   We selected the `GPT-Neo 125M/BERT` model for their:  
+2. **Pretrained RoBert/GPT-Neo Backbone**  
+   We selected the `RoBERT/GPT-Neo 125M` model for their:  
    - **Rotary Positional Embeddings (RoPE):**  
      - Encodes relative token positions, improving generalization to varied sequence lengths.  
    - **Dense Self-Attention:**  
@@ -97,11 +97,15 @@ Semantically similar sentences (e.g.,
 ### Design Choices & Rationale
 
 - **Tokenizer:**  
-  BPE balances vocabulary size and coverage, reducing unknown tokens.  
+  BPE balances vocabulary size and coverage, reducing unknown tokens. Helps in spelling errors.
+
 - **Backbone:**  
-  GPT-Neo’s RoPE layer and self-attention suit sentence-level encoding; being open-source allows experimentation across sizes.  
+   We are using RoBERTa because its fully bidirectional masked‑language‑modeling objective yields richer contextual representations by attending to both left and right context; 
+   
+   We also experiment with GPT‑Neo’s RoPE layer and self‑attention for efficient sentence‑level encoding; both being open‑source enables easy scaling and ablation across model sizes. 
+
 - **Pooling + Projection:**  
-  Mean-pooling is simple and effective; a projection layer controls embedding dimension; ℓ₂-normalization yields consistent similarity metrics.
+  Mean‑pooling is simple and effective; a projection layer controls embedding dimension; ℓ₂‑normalization yields consistent similarity metrics.
 
 
 
@@ -147,13 +151,13 @@ Example entry:
      ```  
    - **Output dim:** 9  
 
-Both tasks share the same GPT-Neo encoder (from Task 1) but use separate projection heads.
+Both tasks share the same RoBERT/GPT-Neo encoder (from Task 1) but use separate projection heads.
 
 ### 2.3 Model Architecture  
 ![Multi-Task Architecture](images/multi_task_framework.png)  
 
 - **Shared Encoder**  
-  - `GPT-Neo 125M` (hidden_dim = 768)  
+  - `RoBERT/GPT-Neo 125M` (hidden_dim = 768)  
 
 - **Sentence Classification Head**  
   ```python
@@ -249,7 +253,7 @@ The results and discussions are compiled in task3.md
 
 ### 3.4 Transfer-Learning Strategy
 1. **Choice of Pre-trained Model**  
-   - _Lightweight iteration:_ `EleutherAI/gpt-neo-125M` (fast to train).  
+   - _Lightweight iteration:_  (fast to train).  
    - _Higher capacity:_ consider larger GPT-Neo (1.3B) or “all-MiniLM” models for stronger embeddings.
 2. **Layers to Freeze & Unfreeze**  
    1. **Stage 1 (Linear Probe):** Freeze all transformer layers; train only the heads.  

@@ -5,12 +5,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import torch
-from transformers import GPTNeoModel, AutoTokenizer
+from transformers import GPTNeoModel, AutoTokenizer, RobertaModel
 
 class SentenceTransformer(nn.Module):
 
     def __init__(self,
-        backbone_type = "EleutherAI/gpt-neo-125M",
+        backbone_type = "FacebookAI/roberta-base",
         pooling = "mean"
     ):
         super().__init__()
@@ -21,7 +21,10 @@ class SentenceTransformer(nn.Module):
         self.tokenizer.pad_token = self.tokenizer.eos_token # Use the end-of-sequence token as the padding token
 
         # Load the pre-trained GPT-Neo transformer model
-        self.backbone  = GPTNeoModel.from_pretrained(backbone_type)
+        if backbone_type == "EleutherAI/gpt-neo-125M":
+            self.backbone  = GPTNeoModel.from_pretrained(backbone_type)
+        elif backbone_type == 'FacebookAI/roberta-base':
+            self.backbone = RobertaModel.from_pretrained(backbone_type)
 
         # Store pooling type ('mean' or 'last')
         self.pooling   = pooling

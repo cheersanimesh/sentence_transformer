@@ -189,7 +189,7 @@ if __name__=='__main__':
     parser.add_argument('--freeze_encoder', type = bool, default = False)
     parser.add_argument('--data_path', type=str, default='data/dummy_data.json')
     parser.add_argument('--model_load_path', type = str, default=None)
-    parser.add_argument('--encoder_type', type = str, default = 'EleutherAI/gpt-neo-125M')
+    parser.add_argument('--encoder_type', type = str, default = 'FacebookAI/roberta-base')
     parser.add_argument('--pooling', type = str, default = 'mean')
     parser.add_argument('--hidden_size',type= int, default = 768)
 
