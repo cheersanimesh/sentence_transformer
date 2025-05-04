@@ -254,7 +254,7 @@ The results and discussions are compiled in task3.md
 ### 3.4 Transfer-Learning Strategy
 1. **Choice of Pre-trained Model**  
    - _Lightweight iteration:_  (fast to train).  
-   - _Higher capacity:_ consider larger GPT-Neo (1.3B) or “all-MiniLM” models for stronger embeddings.
+   - _Higher capacity:_ consider larger  models for stronger embeddings.
 2. **Layers to Freeze & Unfreeze**  
    1. **Stage 1 (Linear Probe):** Freeze all transformer layers; train only the heads.  
    2. **Stage 2:** Unfreeze the top 1–2 transformer blocks; fine-tune backbone + heads at a low learning rate (e.g. 1e-5).  
