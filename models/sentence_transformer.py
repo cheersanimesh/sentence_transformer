@@ -15,7 +15,7 @@ class SentenceTransformer(nn.Module):
     ):
         super().__init__()
         
-        #our tokenizer
+        #initalize tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(backbone_type)
 
         self.tokenizer.pad_token = self.tokenizer.eos_token # Use the end-of-sequence token as the padding token
