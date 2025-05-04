@@ -31,7 +31,10 @@ ner_label_map = {
     6: "I-ORG",
     7: "B-DATE",
     8: "I-DATE",
+	9: "I-MISC",
+	10:"B-MISC"
 }
+
 
 def main(args):
 
@@ -40,7 +43,7 @@ def main(args):
 		backbone_type = args.encoder_backbone_type,
 		pooling = args.encoder_backbone_pooling
 	)
-
+	
 	# If a pre-trained encoder checkpoint is provided, load it
 	if args.encoder_model_path is not None:
 		## load model
@@ -68,50 +71,48 @@ def main(args):
 
 	with torch.no_grad():
 		logits_sentence_classification, ner_logits = multi_task_transformer_model(test_sentences)
-		
-		# Convert logits → predicted class indices
 		preds_cls = torch.argmax(logits_sentence_classification, dim=-1).tolist()
 		preds_ner = torch.argmax(ner_logits, dim = -1).tolist()
+
+	for sid, sentence in enumerate(test_sentences):
+		print(f"\nSentence {sid}: «{sentence}»")
+		print("-" * 60)
+
+		# -------- Task A: sentence‑level class --------
+		cls_idx = preds_cls[sid]
+		print("[Task A] Predicted category:", sentence_class_labels[cls_idx])
+
+		# -------- Task B: token‑level NER -------------
+		print("\n[Task B] Named Entity Recognition (NER)\n")
+
+		# Tokenize with offset and word‑id mapping (BERT‑style)
+		enc        = tokenizer(sentence, return_offsets_mapping=True)
+		toks       = tokenizer.convert_ids_to_tokens(enc["input_ids"])
+		offsets    = enc["offset_mapping"]           # [(char_start, char_end), ...]
+		word_ids   = enc.word_ids()                  # map sub‑token → word index
+
+		# Iterate over *distinct* words (skip [CLS]/[SEP] etc.)
+		seen_words = set()
+		for tok_idx, wid in enumerate(word_ids):
+			if wid is None or wid in seen_words:
+				continue
+			seen_words.add(wid)
+
+			# All sub‑token indices belonging to this word
+			piece_idxs = [i for i, w in enumerate(word_ids) if w == wid]
+
+			# Char span covering all pieces
+			start = offsets[piece_idxs[0]][0] +1
+			end   = offsets[piece_idxs[-1]][1]
+
+			# Reconstruct the original word string
+			word = tokenizer.convert_tokens_to_string([toks[i] for i in piece_idxs])
+
+			# BIO tag – first piece is standard for beginning marker
+			ent_label = ner_label_map[preds_ner[sid][piece_idxs[0]]]
+
+			print(f"{word:<20s} [{start:>2d}:{end:<2d}]  →  {ent_label}")
 	
-	# Loop over each test sentence and print the predicted outputs
-	for i, sent in enumerate(test_sentences):
-		print(f"\nSentence: “{sent}”")
-		
-		# --- Task A ---
-		cls_idx = preds_cls[i]
-		print("  [Task A] Predicted category:", sentence_class_labels[cls_idx])
-
-		# --- Task B: NER decoding ---
-		tokens = tokenizer.tokenize(sent)        # e.g. ["[CLS]", "Alice", "went", …, "[SEP]"]
-		ner_ids = preds_ner[i]             # list of same length
-		entities = []
-		current_ent = None
-
-		# Iterate token-by-token with their predicted NER ID
-		for tok, lid in zip(tokens, ner_ids):
-			label = ner_label_map[lid]
-			if label.startswith("B-"):
-				# Begin a new entity span
-				if current_ent:
-					entities.append(current_ent)
-				current_ent = {"type": label[2:], "tokens": [tok]}
-			elif label.startswith("I-") and current_ent:
-				# Continue the current entity span
-				current_ent["tokens"].append(tok)
-			else:
-				 # Outside any named entity
-				if current_ent:
-					entities.append(current_ent)
-					current_ent = None
-		# If the last token was part of an entity, close it out
-		if current_ent:
-			entities.append(current_ent)
-
-		# print the extacted scan
-		print("  [Task B] Predicted entities:")
-		for ent in entities:
-			text = encoder.tokenizer.convert_tokens_to_string(ent["tokens"])
-			print(f"    • {ent['type']}: “{text}”")
 
 
 
@@ -133,7 +134,7 @@ if __name__=='__main__':
 	
 
 	parser.add_argument('--num_classes_task_sentence_classification', type = int, default = 4)
-	parser.add_argument('--num_classes_ner', type = int, default = 9)
+	parser.add_argument('--num_classes_ner', type = int, default = 11)
 	
 	args = parser.parse_args()
 	
