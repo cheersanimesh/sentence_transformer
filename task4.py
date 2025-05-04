@@ -63,7 +63,6 @@ def main(args):
     idx2ent = {i:lab for i, lab in enumerate(args.ner_label_map)}
     tokenizer = model.encoder.tokenizer
 
-    #dataset = DummyMTLDataset(args.data_path, sent2idx, ent2idx)
     dataset = DummyMTLDataset(json_path = args.data_path , tokenizer = tokenizer, sent2idx = sent2idx, ent2idx = ent2idx)
     loader  = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
 

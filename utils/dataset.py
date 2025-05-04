@@ -7,6 +7,8 @@ class DummyMTLDataset(Dataset):
 
     def __init__(self, json_path,sent2idx, ent2idx, tokenizer):
         self.tokenizer = tokenizer
+
+        # Load the entire JSON list into memory
         with open(json_path, "r") as f:
             self.data = json.load(f)
         
@@ -22,6 +24,10 @@ class DummyMTLDataset(Dataset):
         cls_label = item['task_A']
         ents = item["task_B"]
 
+
+        # ------------------------------------------------------------- #
+        # 1) Tokenise sentence ➜ sub‑tokens with offset mapping
+        # ------------------------------------------------------------- #
         enc = self.tokenizer(
             sent,
             return_offsets_mapping=True,
@@ -29,9 +35,12 @@ class DummyMTLDataset(Dataset):
             truncation=True,
             max_length=64,
         )
+         # Start with all "O" labels (Outside)
         labels = [self.ent2idx["O"]] * len(enc.offset_mapping)
 
-        # annotate tokens
+        # ------------------------------------------------------------- #
+        # 2) Annotate each sub‑token with BIO tag if it overlaps an entity
+        # ------------------------------------------------------------- #
         for ent in ents:
             e_start, e_end = ent["start"], ent["end"]
             e_type = ent["type"].upper()
@@ -51,11 +60,13 @@ class DummyMTLDataset(Dataset):
                 labels[tidx] = self.ent2idx[b_tag] if t_start == e_start else self.ent2idx[i_tag]
 
         enc.pop("offset_mapping")
-        enc["labels"] = labels
+        #enc["labels"] = labels
+
+        # Assemble output dict
         return {
             "sentence":sent,
             "cls_label": self.sent2idx[cls_label],
-            "spans": enc['labels']
+            "spans": labels
         }
         #return {k: torch.tensor(v) for k, v in enc.items()}
 
