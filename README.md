@@ -46,18 +46,18 @@ A modular pipeline for building and evaluating transformer-based sentence encode
 ## Task 1: Sentence Transformer Implementation
 
 ### Model Architecture  
-![Sentence Transformer Architecture](images/sentence_transformer.png)
+![Sentence Transformer Architecture](images/sentence_transformer_framework.png)
 
 Our sentence encoder consists of three main components:
 
-1. **BPE-Based GPT Tokenizer**  
+1. **BPE-Based Tokenizer**  
    - Uses Byte-Pair Encoding (BPE) to split text into subword units.  
    - **Why BPE?**  
      - Handles rare or out-of-vocabulary words by decomposing them into known subwords.  
      - Keeps vocabulary size manageable while minimizing “unknown” tokens.
 
-2. **Pretrained GPT-Neo Backbone**  
-   We selected the `GPT-Neo 125M` model for its:  
+2. **Pretrained GPT-Neo/Bert Backbone**  
+   We selected the `GPT-Neo 125M/BERT` model for their:  
    - **Rotary Positional Embeddings (RoPE):**  
      - Encodes relative token positions, improving generalization to varied sequence lengths.  
    - **Dense Self-Attention:**  
@@ -150,7 +150,7 @@ Example entry:
 Both tasks share the same GPT-Neo encoder (from Task 1) but use separate projection heads.
 
 ### 2.3 Model Architecture  
-![Multi-Task Architecture](images/multi_task_model.png)  
+![Multi-Task Architecture](images/multi_task_framework.png)  
 
 - **Shared Encoder**  
   - `GPT-Neo 125M` (hidden_dim = 768)  
