@@ -99,7 +99,7 @@ class SentenceTransformer(nn.Module):
 
             last_chunks = {}
             for idx, sample in enumerate(overflow_to_sample):
-                last_chunks[sample] = idx
+                last_chunks[sample.item()] = idx
             # gather last hidden state of last real token
             emb_list = []
             for sample, chunk_idx in sorted(last_chunks.items()):
@@ -113,8 +113,8 @@ class SentenceTransformer(nn.Module):
             first_chunks = {}
             for chunk_idx, sample_idx in enumerate(overflow_to_sample):
                 # record only the first chunk 
-                if sample_idx not in first_chunks:
-                    first_chunks[sample_idx] = chunk_idx
+                if sample_idx.item() not in first_chunks:
+                    first_chunks[sample_idx.item()] = chunk_idx
             # gather [CLS] (position 0) for each sample in order
             emb_list = [
                 last_hidden[chunk_idx, 0]

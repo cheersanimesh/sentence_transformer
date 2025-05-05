@@ -92,7 +92,7 @@ def main(args):
             
             loss_ner = criterion_ner(
                 logits_ner.view(-1, L),
-                truncated_targets_ner.view(-1)
+                truncated_targets_ner.reshape(-1)
             )
             
             loss = loss_sentence_classification + loss_ner
