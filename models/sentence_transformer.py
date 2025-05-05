@@ -16,7 +16,8 @@ class SentenceTransformer(nn.Module):
         super().__init__()
         
         
-        backbone_decoder_only = False
+        backbone_decoder_only = False  # variable to determine backbone is decoder only
+
         # Load the pre-trained backbone transformer models
         if backbone_type == "EleutherAI/gpt-neo-125M":
             self.backbone  = GPTNeoModel.from_pretrained(backbone_type)
@@ -38,7 +39,7 @@ class SentenceTransformer(nn.Module):
 
         # Stride size for overlapping long sequences 
         self.stride = int(0.2 * self.max_token_length)
-        # Store pooling type ('mean' or 'last')
+        # Store pooling type ('mean' or 'last' or 'cls')
         self.pooling   = pooling
 
     def forward(self, sentences: list[str]) -> torch.Tensor:
@@ -105,7 +106,22 @@ class SentenceTransformer(nn.Module):
                 # find how many real tokens in that chunk
                 real_lens = encoded["attention_mask"][chunk_idx].sum().item()
                 emb_list.append(last_hidden[chunk_idx, real_lens-1])
-            embeddings = torch.stack(emb_list, dim=0)                
+            embeddings = torch.stack(emb_list, dim=0)      
+         
+        elif self.pooling == "cls":
+            # take the first token's hidden state of the *first* chunk per sentence
+            first_chunks = {}
+            for chunk_idx, sample_idx in enumerate(overflow_to_sample):
+                # record only the first chunk 
+                if sample_idx not in first_chunks:
+                    first_chunks[sample_idx] = chunk_idx
+            # gather [CLS] (position 0) for each sample in order
+            emb_list = [
+                last_hidden[chunk_idx, 0]
+                for sample_idx, chunk_idx in sorted(first_chunks.items())
+            ]
+            embeddings = torch.stack(emb_list, dim=0)         
+        
         else:
             raise NotImplementedError
         

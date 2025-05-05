@@ -79,25 +79,22 @@ def main(args):
         for batch in loader:
             sentences   = batch["sentences"]
             cls_labels  = batch["cls_labels"].to(device)
-            spans_batch = batch["spans"]
+            target_ner = batch["spans"]
             # now a single forward call on raw strings:
             logits_cls, logits_ner = model(sentences)
             # sentence‐classification loss
             loss_sentence_classification = criterion_sentence_classification(logits_cls, cls_labels)
 
-           
+            
             B, T, L = logits_ner.shape
-            target_ner = torch.zeros(B, T, dtype=torch.long, device=device)
 
-            # for i, spans in enumerate(spans_batch):
-            #     for ent in spans:
-            #         start, end, typ = ent["start"], ent["end"], ent["type"]
-
+            truncated_targets_ner = target_ner[:, :T].reshape(B,T).to(logits_ner.device)
+            
             loss_ner = criterion_ner(
                 logits_ner.view(-1, L),
-                target_ner.view(-1)
+                truncated_targets_ner.view(-1)
             )
-            # import ipdb; ipdb.set_trace()
+            
             loss = loss_sentence_classification + loss_ner
             optimizer.zero_grad()
             loss.backward()
@@ -196,7 +193,7 @@ if __name__=='__main__':
     
 
     parser.add_argument('--epochs', type = int, default= 10)
-    parser.add_argument('--lr', type = float, default = 5e-3)
+    parser.add_argument('--lr', type = float, default = 0.1)
     parser.add_argument('--optimizer', type = str, default = 'adamW')	
     parser.add_argument('--batch_size', type = int, default = 32)
     parser.add_argument(
